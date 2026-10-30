@@ -5,8 +5,8 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 dist/
-build/
 *.pdf
+!TRANSLATE_CLI_PROJECT_REPORT.pdf
 *.log
 models/
 srs_text.txt
