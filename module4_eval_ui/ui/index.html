@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Machine Translator · NLPA 2026</title>
+  <meta name="description" content="Neural Machine Translation powered by MarianMT, mBART-50 and M2M-100 — NLPA Project 2026." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- ── HEADER ─────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header__inner">
+      <div class="header__logo">
+        <span class="header__logo-icon">🌐</span>
+        <span class="header__logo-text">NeuralMT</span>
+        <span class="header__badge">NLPA 2026</span>
+      </div>
+      <nav class="header__nav">
+        <a href="#translate" class="nav-link active">Translate</a>
+        <a href="#evaluate" class="nav-link">Evaluate</a>
+        <a href="/docs" class="nav-link" target="_blank">API Docs</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ── HERO ───────────────────────────────────────────────────────── -->
+    <section class="hero">
+      <h1 class="hero__title">Neural Machine Translation</h1>
+      <p class="hero__sub">Powered by MarianMT · mBART-50 · M2M-100</p>
+    </section>
+
+    <!-- ── TRANSLATE PANEL ────────────────────────────────────────────── -->
+    <section id="translate" class="card glass">
+      <h2 class="card__title">Translate</h2>
+
+      <!-- Language selectors (≤ 3 clicks — NFR-4) -->
+      <div class="lang-row">
+        <div class="lang-group">
+          <label class="lang-label" for="src-lang">Source</label>
+          <select id="src-lang" class="lang-select">
+            <option value="en" selected>🇬🇧 English</option>
+            <option value="fr">🇫🇷 French</option>
+            <option value="de">🇩🇪 German</option>
+            <option value="es">🇪🇸 Spanish</option>
+            <option value="hi">🇮🇳 Hindi</option>
+          </select>
+        </div>
+
+        <button id="swap-btn" class="swap-btn" title="Swap languages" aria-label="Swap source and target">⇆</button>
+
+        <div class="lang-group">
+          <label class="lang-label" for="tgt-lang">Target</label>
+          <select id="tgt-lang" class="lang-select">
+            <option value="fr" selected>🇫🇷 French</option>
+            <option value="en">🇬🇧 English</option>
+            <option value="de">🇩🇪 German</option>
+            <option value="es">🇪🇸 Spanish</option>
+            <option value="hi">🇮🇳 Hindi</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Text areas -->
+      <div class="text-row">
+        <div class="text-box">
+          <textarea id="src-text" class="textarea" placeholder="Enter source text here…" rows="6" spellcheck="true"></textarea>
+          <div class="char-count"><span id="char-count">0</span> / 2000</div>
+        </div>
+
+        <div class="text-box output-box">
+          <div id="output-text" class="textarea output-area" aria-live="polite" aria-label="Translation output">
+            <span class="placeholder">Translation will appear here…</span>
+          </div>
+          <button id="copy-btn" class="icon-btn" title="Copy translation" aria-label="Copy translation">📋</button>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls-row">
+        <div class="beam-group">
+          <label class="lang-label" for="beam-size">Beam Size</label>
+          <select id="beam-size" class="lang-select compact">
+            <option value="1">1 — Greedy</option>
+            <option value="2">2</option>
+            <option value="4" selected>4 — Default</option>
+            <option value="6">6</option>
+          </select>
+        </div>
+
+        <button id="translate-btn" class="btn btn--primary" type="button">
+          <span id="btn-text">Translate</span>
+          <span id="btn-spinner" class="spinner hidden" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <!-- Latency badge -->
+      <div id="latency-badge" class="latency-badge hidden">
+        ⚡ <span id="latency-val"></span> ms · <span id="model-used"></span>
+      </div>
+
+      <!-- Error -->
+      <div id="error-box" class="error-box hidden" role="alert"></div>
+    </section>
+
+    <!-- ── EVALUATE PANEL ─────────────────────────────────────────────── -->
+    <section id="evaluate" class="card glass">
+      <h2 class="card__title">Evaluate Quality</h2>
+      <p class="card__subtitle">Upload a CSV with <code>src</code> and <code>tgt</code> columns to compute BLEU · METEOR · chrF</p>
+
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="eval-file" accept=".csv" hidden />
+        <span class="upload-icon">📂</span>
+        <p>Drag &amp; drop a CSV or <button class="upload-link" id="browse-btn" type="button">browse</button></p>
+        <p class="upload-hint">Max 1 000 sentence pairs</p>
+      </div>
+
+      <button id="eval-btn" class="btn btn--secondary" type="button" disabled>
+        <span id="eval-btn-text">Run Evaluation</span>
+        <span id="eval-spinner" class="spinner hidden"></span>
+      </button>
+
+      <!-- Scores display -->
+      <div id="scores-grid" class="scores-grid hidden">
+        <div class="score-card">
+          <div class="score-label">BLEU</div>
+          <div id="bleu-val" class="score-value">—</div>
+          <div class="score-target">Target ≥ 25</div>
+        </div>
+        <div class="score-card">
+          <div class="score-label">METEOR</div>
+          <div id="meteor-val" class="score-value">—</div>
+          <div class="score-target">Target ≥ 0.35</div>
+        </div>
+        <div class="score-card">
+          <div class="score-label">chrF</div>
+          <div id="chrf-val" class="score-value">—</div>
+          <div class="score-target">Target ≥ 45</div>
+        </div>
+      </div>
+
+      <!-- Export -->
+      <div id="export-row" class="export-row hidden">
+        <button id="export-csv-btn" class="btn btn--outline" type="button">⬇ Export CSV</button>
+        <button id="export-pdf-btn" class="btn btn--outline" type="button">⬇ Export PDF</button>
+      </div>
+
+      <div id="eval-error" class="error-box hidden" role="alert"></div>
+    </section>
+
+    <!-- ── MODEL INFO ──────────────────────────────────────────────────── -->
+    <section class="card glass model-card">
+      <h2 class="card__title">Active Model</h2>
+      <div id="model-info-grid" class="model-info-grid">
+        <div class="info-item"><span class="info-label">ID</span><span id="mi-id" class="info-val">—</span></div>
+        <div class="info-item"><span class="info-label">Type</span><span id="mi-type" class="info-val">—</span></div>
+        <div class="info-item"><span class="info-label">Params</span><span id="mi-params" class="info-val">—</span></div>
+        <div class="info-item"><span class="info-label">Cached</span><span id="mi-cached" class="info-val">—</span></div>
+      </div>
+      <button id="refresh-model-btn" class="btn btn--ghost" type="button">↻ Refresh</button>
+    </section>
+
+  </main>
+
+  <footer class="footer">NLPA Project 2026 · Group of 4 · Machine Translation System</footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
